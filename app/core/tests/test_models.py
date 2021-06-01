@@ -1,33 +1,49 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
+from core import models
+
+
+def sample_user(email='gandalf@lotr.com', password='youShallNotPass'):
+    """Create a sample user"""
+    return get_user_model().objects.create_user(email, password)
+
 
 class ModelTests(TestCase):
     email = "test@dushdesh@hotmail.com"
     password = "test123"
 
     def test_create_user_with_email_successful(self):
-        # Test creating a new user with an email is successful
+        """Test creating a new user with an email is successful"""
         user = get_user_model().objects.create_user(self.email, self.password)
         self.assertEqual(user.email, self.email)
         self.assertTrue(user.check_password(self.password))
 
     def test_new_user_email_normalized(self):
-        # Test the email for a user is normalized
+        """Test the email for a user is normalized"""
         email = 'test@DUSHDESH.COM'
         user = get_user_model().objects.create_user(email, self.password)
         self.assertEqual(user.email, email.lower())
 
     def test_new_user_invalid_email(self):
-        # Test creating user without email raises error
+        """Test creating user without email raises error"""
         with self.assertRaises(ValueError):
             get_user_model().objects.create_user(None, self.password)
 
     def test_create_new_superuser(self):
-        # Test creating a super user
+        """Test creating a super user"""
         user = get_user_model().objects.create_superuser(
             self.email,
-            self.password
+            self.password,
         )
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
+
+    def test_tag_str(self):
+        """Test tag string representation"""
+        tag = models.Tag.objects.create(
+            user=sample_user(),
+            name='Indian',
+        )
+
+        self.assertEqual(str(tag), tag.name)
