@@ -6,37 +6,28 @@ from core.models import Tag, Ingredient
 from recipe.serializers import TagSerializer, IngredientSerializer
 
 
-class TagViewSet(viewsets.GenericViewSet,
-                 mixins.ListModelMixin,
-                 mixins.CreateModelMixin,):
+class BaseRecipeAttrsViewSet(viewsets.GenericViewSet,
+                             mixins.ListModelMixin,
+                             mixins.CreateModelMixin):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        """Get recipe attributes for logged in user"""
+        return self.queryset.filter(user=self.request.user).order_by('-name')
+
+    def perform_create(self, serializer):
+        """Create new recipe attr"""
+        serializer.save(user=self.request.user)
+
+
+class TagViewSet(BaseRecipeAttrsViewSet):
     """Manage tags in the database"""
     serializer_class = TagSerializer
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
     queryset = Tag.objects.all()
 
-    def get_queryset(self):
-        """Resturn Tags for authenticated user only"""
-        return self.queryset.filter(user=self.request.user).order_by('-name')
 
-    def perform_create(self, serializer):
-        """Create a new tag"""
-        serializer.save(user=self.request.user)
-
-
-class IngredientViewSet(viewsets.GenericViewSet,
-                        mixins.ListModelMixin,
-                        mixins.CreateModelMixin):
+class IngredientViewSet(BaseRecipeAttrsViewSet):
     """Manage ingresdients in the database"""
     serializer_class = IngredientSerializer
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
     queryset = Ingredient.objects.all()
-
-    def get_queryset(self):
-        """Return Ingredients for current authenticated user"""
-        return self.queryset.filter(user=self.request.user).order_by('-name')
-
-    def perform_create(self, serializer):
-        """Create an ingredient"""
-        serializer.save(user=self.request.user)
